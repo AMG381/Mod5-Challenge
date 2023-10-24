@@ -1,0 +1,190 @@
+# Mod5-Challenge
+
+# depencies
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy.stats as st
+from pathlib import Path
+
+# study data files
+mouse_metadata_path = Path("Documents/StCode/PyMice1/data/Mouse_metadata.csv")
+study_results_path = Path("Documents/StCode/PyMice1/data/Study_results.csv")
+
+#read the mouse data and the study results
+mousedata = pd.read_csv(mouse_metadata_path)
+studyresults = pd.read_csv(study_results_path)
+
+#combine data sets and display
+pymicedatacomb = pd.merge(mousedata, studyresults, how="left", on=["Mouse ID", "Mouse ID"])
+pymicedatacomb.head()
+Mouse ID	Drug Regimen	Sex	Age_months	Weight (g)	Timepoint	Tumor Volume (mm3)	Metastatic Sites
+0	k403	Ramicane	Male	21	16	0	45.000000	0
+1	k403	Ramicane	Male	21	16	5	38.825898	0
+2	k403	Ramicane	Male	21	16	10	35.014271	1
+3	k403	Ramicane	Male	21	16	15	34.223992	1
+4	k403	Ramicane	Male	21	16	20	32.997729	1
+# Number of mice
+len(mousedata)
+249
+#find duplicate ID
+dupid = pymicedatacomb.loc[pymicedatacomb["Mouse ID"].str.contains("g989")]
+dupid
+Mouse ID	Drug Regimen	Sex	Age_months	Weight (g)	Timepoint	Tumor Volume (mm3)	Metastatic Sites
+908	g989	Propriva	Female	21	26	0	45.000000	0
+909	g989	Propriva	Female	21	26	0	45.000000	0
+910	g989	Propriva	Female	21	26	5	48.786801	0
+911	g989	Propriva	Female	21	26	5	47.570392	0
+912	g989	Propriva	Female	21	26	10	51.745156	0
+913	g989	Propriva	Female	21	26	10	49.880528	0
+914	g989	Propriva	Female	21	26	15	51.325852	1
+915	g989	Propriva	Female	21	26	15	53.442020	0
+916	g989	Propriva	Female	21	26	20	55.326122	1
+917	g989	Propriva	Female	21	26	20	54.657650	1
+918	g989	Propriva	Female	21	26	25	56.045564	1
+919	g989	Propriva	Female	21	26	30	59.082294	1
+920	g989	Propriva	Female	21	26	35	62.570880	2
+Drindex = pymicedatacomb[pymicedatacomb['Mouse ID']=='g989'].index
+pymice2 = pymicedatacomb.drop(Drindex)
+pymice2
+Mouse ID	Drug Regimen	Sex	Age_months	Weight (g)	Timepoint	Tumor Volume (mm3)	Metastatic Sites
+0	k403	Ramicane	Male	21	16	0	45.000000	0
+1	k403	Ramicane	Male	21	16	5	38.825898	0
+2	k403	Ramicane	Male	21	16	10	35.014271	1
+3	k403	Ramicane	Male	21	16	15	34.223992	1
+4	k403	Ramicane	Male	21	16	20	32.997729	1
+...	...	...	...	...	...	...	...	...
+1888	z969	Naftisol	Male	9	30	25	63.145652	2
+1889	z969	Naftisol	Male	9	30	30	65.841013	3
+1890	z969	Naftisol	Male	9	30	35	69.176246	4
+1891	z969	Naftisol	Male	9	30	40	70.314904	4
+1892	z969	Naftisol	Male	9	30	45	73.867845	4
+1880 rows × 8 columns
+
+len(pymice2)
+1880
+a = pymicedatacomb.groupby("Drug Regimen")["Tumor Volume (mm3)"].mean()
+b = pymicedatacomb.groupby("Drug Regimen")["Tumor Volume (mm3)"].median()
+c = pymicedatacomb.groupby("Drug Regimen")["Tumor Volume (mm3)"].var()
+d = pymicedatacomb.groupby("Drug Regimen")["Tumor Volume (mm3)"].std()
+sumstats1 = pd.merge(a, b, on='Drug Regimen')
+sumstats2 = pd.merge(c, d, on='Drug Regimen')
+Allstats = pd.merge(sumstats1, sumstats2, how="left", on=("Drug Regimen"))
+Allstats.head()
+Tumor Volume (mm3)_x_x	Tumor Volume (mm3)_y_x	Tumor Volume (mm3)_x_y	Tumor Volume (mm3)_y_y
+Drug Regimen				
+Capomulin	40.675741	41.557809	24.947764	4.994774
+Ceftamin	52.591172	51.776157	39.290177	6.268188
+Infubinol	52.884795	51.820584	43.128684	6.567243
+Ketapril	55.235638	53.698743	68.553577	8.279709
+Naftisol	54.331565	52.509285	66.173479	8.134708
+agrodata = pymicedatacomb["Tumor Volume (mm3)"].agg(['mean','median','var','std','sem'])
+agrodata.head()
+mean      50.448381
+median    48.951474
+var       79.116074
+std        8.894722
+sem        0.204436
+Name: Tumor Volume (mm3), dtype: float64
+count = pymicedatacomb.groupby("Drug Regimen")["Timepoint"].count()
+count.plot.bar(x:= "Drug Regimen" , y:= "Timepoint");
+
+sexcount1 = mousedata.groupby("Sex").count()
+sexcount1
+Permale = sexcount1/249 * 100
+Permale
+Mouse ID	Drug Regimen	Age_months	Weight (g)
+Sex				
+Female	49.799197	49.799197	49.799197	49.799197
+Male	50.200803	50.200803	50.200803	50.200803
+Permale
+values = Permale['Mouse ID']
+Sexs = ["Female","Male"]
+plt.pie(values,labels=Sexs,autopct="%2.1f%%")
+plt.show()
+
+micendtime = pymicedatacomb.groupby("Timepoint")["Mouse ID"].max()
+micendtime
+Timepoint
+0     z969
+5     z969
+10    z969
+15    z969
+20    z969
+25    z969
+30    z969
+35    z969
+40    z969
+45    z969
+Name: Mouse ID, dtype: object
+Newpd = pd.merge(pymicedatacomb, micendtime, how="left", on=["Mouse ID", "Timepoint"])
+Newpd
+Mouse ID	Drug Regimen	Sex	Age_months	Weight (g)	Timepoint	Tumor Volume (mm3)	Metastatic Sites
+0	k403	Ramicane	Male	21	16	0	45.000000	0
+1	k403	Ramicane	Male	21	16	5	38.825898	0
+2	k403	Ramicane	Male	21	16	10	35.014271	1
+3	k403	Ramicane	Male	21	16	15	34.223992	1
+4	k403	Ramicane	Male	21	16	20	32.997729	1
+...	...	...	...	...	...	...	...	...
+1888	z969	Naftisol	Male	9	30	25	63.145652	2
+1889	z969	Naftisol	Male	9	30	30	65.841013	3
+1890	z969	Naftisol	Male	9	30	35	69.176246	4
+1891	z969	Naftisol	Male	9	30	40	70.314904	4
+1892	z969	Naftisol	Male	9	30	45	73.867845	4
+1893 rows × 8 columns
+
+treats = ["Ramicane","Capomulin","Infubinol","Ceftamin"]
+tumvol = []
+for string in Newpd:
+   if Newpd["Mouse ID"] == treats & Newpd["Timepoint"] >= 45:
+     tumvol = Newpd["Tumor Volume (mm3)"]
+---------------------------------------------------------------------------
+ValueError                                Traceback (most recent call last)
+Cell In[190], line 4
+      2 tumvol = []
+      3 for string in Newpd:
+----> 4    if Newpd["Mouse ID"] == treats & Newpd["Timepoint"] >= 45:
+      5      tumvol = Newpd["Tumor Volume (mm3)"]
+
+File ~/anaconda3/lib/python3.11/site-packages/pandas/core/ops/common.py:72, in _unpack_zerodim_and_defer.<locals>.new_method(self, other)
+     68             return NotImplemented
+     70 other = item_from_zerodim(other)
+---> 72 return method(self, other)
+
+File ~/anaconda3/lib/python3.11/site-packages/pandas/core/arraylike.py:76, in OpsMixin.__rand__(self, other)
+     74 @unpack_zerodim_and_defer("__rand__")
+     75 def __rand__(self, other):
+---> 76     return self._logical_method(other, roperator.rand_)
+
+File ~/anaconda3/lib/python3.11/site-packages/pandas/core/series.py:6254, in Series._logical_method(self, other, op)
+   6251 lvalues = self._values
+   6252 rvalues = extract_array(other, extract_numpy=True, extract_range=True)
+-> 6254 res_values = ops.logical_op(lvalues, rvalues, op)
+   6255 return self._construct_result(res_values, name=res_name)
+
+File ~/anaconda3/lib/python3.11/site-packages/pandas/core/ops/array_ops.py:395, in logical_op(left, right, op)
+    391 # For int vs int `^`, `|`, `&` are bitwise operators and return
+    392 #   integer dtypes.  Otherwise these are boolean ops
+    393 filler = fill_int if is_self_int_dtype and is_other_int_dtype else fill_bool
+--> 395 res_values = na_logical_op(lvalues, rvalues, op)
+    396 # error: Cannot call function of unknown type
+    397 res_values = filler(res_values)  # type: ignore[operator]
+
+File ~/anaconda3/lib/python3.11/site-packages/pandas/core/ops/array_ops.py:305, in na_logical_op(x, y, op)
+    295 def na_logical_op(x: np.ndarray, y, op):
+    296     try:
+    297         # For exposition, write:
+    298         #  yarr = isinstance(y, np.ndarray)
+   (...)
+    303         # Then Cases where this goes through without raising include:
+    304         #  (xint or xbool) and (yint or bool)
+--> 305         result = op(x, y)
+    306     except TypeError:
+    307         if isinstance(y, np.ndarray):
+    308             # bool-bool dtype operations should be OK, should not get here
+
+File ~/anaconda3/lib/python3.11/site-packages/pandas/core/roperator.py:54, in rand_(left, right)
+     53 def rand_(left, right):
+---> 54     return operator.and_(right, left)
+
+ValueError: operands could not be broadcast together with shapes (4,) (1893,) 
+ 
